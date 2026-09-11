@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>💵 قیمت لحظه‌ای دلار | tgju.org</title>
+<meta name="description" content="قیمت لحظه‌ای دلار آمریکا به ریال و تومان — منبع: tgju.org">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💵</text></svg>">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
+<style>
+  :root {
+    --bg1: #0f172a;
+    --bg2: #1e293b;
+    --card: rgba(30, 41, 59, .72);
+    --border: rgba(148, 163, 184, .18);
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --up: #34d399;
+    --down: #f87171;
+    --stable: #94a3b8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Vazirmatn, "Segoe UI", Tahoma, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 14px;
+    background:
+      radial-gradient(1000px 600px at 85% -10%, rgba(56,189,248,.14), transparent 60%),
+      radial-gradient(900px 500px at 0% 110%, rgba(52,211,153,.10), transparent 60%),
+      linear-gradient(160deg, var(--bg1), var(--bg2));
+    color: var(--text);
+  }
+  .card {
+    width: 100%;
+    max-width: 430px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 30px 26px 24px;
+    backdrop-filter: blur(14px);
+    box-shadow: 0 24px 60px rgba(2, 6, 23, .55);
+    text-align: center;
+  }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .head h1 { font-size: 17px; font-weight: 700; }
+  .head h1 small { display: block; font-size: 11.5px; font-weight: 400; color: var(--muted); margin-top: 3px; }
+  .live {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px; padding: 5px 11px;
+  }
+  .live .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--up); animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: .35; transform: scale(.8);} }
+
+  .price-box { margin: 6px 0 14px; }
+  .price {
+    font-size: 46px; font-weight: 800; letter-spacing: -.5px;
+    color: #fff; line-height: 1.25;
+    font-variant-numeric: tabular-nums;
+  }
+  .unit { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  .toman {
+    margin-top: 10px; font-size: 15.5px; color: var(--accent);
+    font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 13.5px; font-weight: 700;
+    border-radius: 999px; padding: 7px 16px; margin: 4px 0 20px;
+    border: 1px solid var(--border);
+    color: var(--stable); background: rgba(148,163,184,.10);
+  }
+  .badge.up   { color: var(--up);     background: rgba(52,211,153,.12); }
+  .badge.down { color: var(--down);   background: rgba(248,113,113,.12); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat {
+    background: rgba(15, 23, 42, .55);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 12px 6px;
+  }
+  .stat .label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+  .stat .value { font-size: 13.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .meta {
+    font-size: 12px; color: var(--muted);
+    padding-top: 14px; border-top: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .meta b { color: var(--text); font-weight: 600; }
+  .footer {
+    margin-top: 12px; font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer a {
+    color: var(--accent); text-decoration: none; font-weight: 600;
+  }
+  .footer a:hover { text-decoration: underline; }
+  .error {
+    margin-top: 14px; font-size: 12.5px; color: var(--down);
+    display: none;
+  }
+  .skeleton {
+    background: linear-gradient(90deg, rgba(148,163,184,.08), rgba(148,163,184,.22), rgba(148,163,184,.08));
+    background-size: 200% 100%;
+    animation: shine 1.4s infinite;
+    border-radius: 10px;
+    color: transparent !important;
+    user-select: none;
+  }
+  @keyframes shine { to { background-position: -200% 0; } }
+</style>
+</head>
+<body>
+<main class="card">
+  <div class="head">
+    <h1>💵 قیمت لحظه‌ای دلار
+      <small>دلار آزاد — بازار تهران</small>
+    </h1>
+    <span class="live"><span class="dot"></span> زنده</span>
+  </div>
+
+  <div class="price-box">
+    <div class="price skeleton" id="price-rial">—</div>
+    <div class="unit">ریال</div>
+    <div class="toman" id="price-toman">—</div>
+  </div>
+
+  <div class="badge" id="badge">در حال دریافت…</div>
+
+  <div class="stats">
+    <div class="stat"><div class="label">بیشترین</div><div class="value" id="high">—</div></div>
+    <div class="stat"><div class="label">کمترین</div><div class="value" id="low">—</div></div>
+    <div class="stat"><div class="label">تغییر</div><div class="value" id="change">—</div></div>
+  </div>
+
+  <div class="meta">آخرین به‌روزرسانی: <b id="updated">—</b></div>
+  <div class="footer">
+    <span>به‌روزرسانی خودکار هر ۳۰ دقیقه</span>
+    <a href="https://www.tgju.org/profile/price_dollar_rl" target="_blank" rel="noopener">منبع: tgju.org ↗</a>
+  </div>
+  <div class="error" id="error">⚠️ خطا در دریافت قیمت — چند لحظه دیگر دوباره تلاش می‌کنیم…</div>
+</main>
+
+<script>
+  const GIST_RAW = "https://gist.githubusercontent.com/mohammad123-98/004dbecb707498c78bfa86a7d03203c9/raw/dollar_price.json";
+  const REFRESH_MS = 60000;
+
+  const $ = (id) => document.getElementById(id);
+  const fa = (n) => Number(n).toLocaleString("fa-IR");
+
+  function setSkeleton(on) {
+    ["price-rial", "high", "low", "change"].forEach((id) => {
+      $(id).classList.toggle("skeleton", on);
+    });
+  }
+
+  function render(d) {
+    $("price-rial").textContent = fa(d.price_rial);
+    $("price-toman").textContent = fa(d.price_toman) + " تومان";
+    $("high").textContent = fa(d.high_rial);
+    $("low").textContent = fa(d.low_rial);
+    $("change").textContent = fa(Math.abs(d.change_rial)) + " ریال";
+
+    const badge = $("badge");
+    if (d.direction === "up") {
+      badge.className = "badge up";
+      badge.textContent = "▲ " + fa(d.change_rial) + " ریال (+" + fa(d.change_percent) + "٪)";
+    } else if (d.direction === "down") {
+      badge.className = "badge down";
+      badge.textContent = "▼ " + fa(Math.abs(d.change_rial)) + " ریال (" + fa(d.change_percent) + "٪)";
+    } else {
+      badge.className = "badge";
+      badge.textContent = "بدون تغییر نسبت به روز قبل";
+    }
+
+    $("updated").textContent = "امروز ساعت " + String(d.last_updated_tehran).split(" ")[1];
+    $("error").style.display = "none";
+    setSkeleton(false);
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(GIST_RAW + "?t=" + Date.now(), { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      render(data);
+    } catch (e) {
+      console.error("fetch failed:", e);
+      setSkeleton(false);
+      $("error").style.display = "block";
+    }
+  }
+
+  load();
+  setInterval(load, REFRESH_MS);
+</script>
+</body>
+</html>

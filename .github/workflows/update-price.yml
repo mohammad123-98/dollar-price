@@ -1,0 +1,85 @@
+name: Update Dollar Price
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update-gist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch price from tgju.org and update Gist
+        env:
+          GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+          GIST_ID: "004dbecb707498c78bfa86a7d03203c9"
+        run: |
+          set -euo pipefail
+
+          UA="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+
+          echo "::group::Fetching tgju.org data"
+          curl -sf --retry 3 --retry-delay 5 --max-time 30 \
+               -H "User-Agent: $UA" \
+               "https://call1.tgju.org/ajax.json" -o /tmp/tgju.json
+          echo "::endgroup::"
+
+          P=$(jq -r '.current.price_dollar_rl.p'  /tmp/tgju.json)
+          H=$(jq -r '.current.price_dollar_rl.h'  /tmp/tgju.json)
+          L=$(jq -r '.current.price_dollar_rl.l'  /tmp/tgju.json)
+          D=$(jq -r '.current.price_dollar_rl.d'  /tmp/tgju.json)
+          DP=$(jq -r '.current.price_dollar_rl.dp' /tmp/tgju.json)
+          DT=$(jq -r '.current.price_dollar_rl.dt' /tmp/tgju.json)
+          TS=$(jq -r '.current.price_dollar_rl.ts' /tmp/tgju.json)
+
+          echo "Price: $P | High: $H | Low: $L | Change: $D ($DP%) | Dir: $DT"
+
+          strip() { echo "$1" | tr -d ','; }
+          P_NUM=$(strip "$P"); H_NUM=$(strip "$H"); L_NUM=$(strip "$L")
+
+          D_CLEAN=$(echo "$D" | tr -d ',')
+          D_NUM=$(echo "$D_CLEAN" | sed 's/-//')
+
+          case "$DT" in
+            pos) DIRECTION="up" ;;
+            neg) DIRECTION="down" ;;
+            *)   DIRECTION="stable" ;;
+          esac
+
+          NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          NOW_TEHRAN=$(TZ=Asia/Tehran date +"%Y-%m-%d %H:%M")
+
+          CONTENT=$(jq -n \
+            --arg source "https://www.tgju.org/profile/price_dollar_rl" \
+            --arg symbol "price_dollar_rl" \
+            --arg title "دلار" \
+            --arg price_rial_str "$P" \
+            --argjson price_rial "$P_NUM" \
+            --argjson price_toman "$((P_NUM / 10))" \
+            --argjson high_rial "$H_NUM" \
+            --argjson low_rial "$L_NUM" \
+            --argjson change_rial "$D_NUM" \
+            --argjson change_percent "$DP" \
+            --arg direction "$DIRECTION" \
+            --arg source_time "$TS" \
+            --arg last_updated_utc "$NOW_UTC" \
+            --arg last_updated_tehran "$NOW_TEHRAN" \
+            '{
+              source: $source, symbol: $symbol, title: $title,
+              price_rial_str: $price_rial_str,
+              price_rial: $price_rial, price_toman: $price_toman,
+              high_rial: $high_rial, low_rial: $low_rial,
+              change_rial: $change_rial, change_percent: $change_percent,
+              direction: $direction, source_time: $source_time,
+              last_updated_utc: $last_updated_utc,
+              last_updated_tehran: $last_updated_tehran
+            }')
+
+          BODY=$(jq -n --arg c "$CONTENT" \
+            '{"files":{"dollar_price.json":{"content":$c}}}')
+
+          echo "::group::Updating Gist"
+          echo "$BODY" | gh api "gists/$GIST_ID" -X PATCH --input - > /dev/null
+          echo "::endgroup::"
+
+          echo "✅ Gist updated: $P rial"
