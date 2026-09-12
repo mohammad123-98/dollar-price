@@ -9,18 +9,16 @@
 ## ⚙️ معماری
 
 ```
-tgju.org ──(GitHub Actions هر ۳۰ دقیقه)──► Gist (dollar_price.json)
-                                                │
-                                                ▼
-                                    index.html روی GitHub Pages
-                                    (fetch مستقیم از Gist)
+                ┌── (مستقیم از مرورگر، هر ۳۰ ثانیه — زنده) ──┐
+index.html ──► │            api.tgju.org (CORS باز)             │
+                └── (فال‌بک: هر ۵ دقیقه) ──────────────────┐   │
+                                                            ▼   ▼
+tgju.org ──(GitHub Actions هر ۵ دقیقه)──► Gist (dollar_price.json)
 ```
 
-1. **ورک‌فلو** [`.github/workflows/update-price.yml`](.github/workflows/update-price.yml) هر ۳۰ دقیقه اجرا می‌شود.
-2. قیمت دلار (`price_dollar_rl`) از API سایت tgju.org خوانده می‌شود.
-3. داده در فایل JSON داخل [گیست](https://gist.github.com/mohammad123-98/004dbecb707498c78bfa86a7d03203c9) ذخیره می‌شود (Gist ها هدر CORS باز دارند).
-4. صفحه `index.html` با `fetch` داده را از Gist می‌خواند و نمایش می‌دهد.
-5. صفحه هر ۶۰ ثانیه خودش را رفرش می‌کند.
+1. صفحه `index.html` اول تلاش می‌کند قیمت را **مستقیم از API سایت tgju.org** بخواند (به‌روزرسانی زنده هر ۳۰ ثانیه).
+2. اگر API مستقیم در دسترس نبود، از **گیست** به عنوان پشتیبان استفاده می‌کند.
+3. **ورک‌فلو** [`.github/workflows/update-price.yml`](.github/workflows/update-price.yml) هر **۵ دقیقه** (حداقل مجاز در GitHub Actions) اجرا می‌شود و گیست را به‌روز نگه می‌دارد.
 
 ## 📄 ساختار فایل داده
 

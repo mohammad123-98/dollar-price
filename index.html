@@ -153,7 +153,7 @@
 
   <div class="meta">آخرین به‌روزرسانی: <b id="updated">—</b></div>
   <div class="footer">
-    <span>به‌روزرسانی خودکار هر ۳۰ دقیقه</span>
+    <span id="refresh-label">در حال اتصال به tgju.org…</span>
     <a href="https://www.tgju.org/profile/price_dollar_rl" target="_blank" rel="noopener">منبع: tgju.org ↗</a>
   </div>
   <div class="error" id="error">⚠️ خطا در دریافت قیمت — چند لحظه دیگر دوباره تلاش می‌کنیم…</div>
@@ -161,10 +161,22 @@
 
 <script>
   const GIST_RAW = "https://gist.githubusercontent.com/mohammad123-98/004dbecb707498c78bfa86a7d03203c9/raw/dollar_price.json";
-  const REFRESH_MS = 60000;
+  const API_URL  = "https://api.tgju.org/v1/market/indicator/summary-table-data/price_dollar_rl";
+  const POLL_MS  = 30000;      // live fetch interval (direct from tgju.org)
+  const GIST_MIN_GAP = 55000;  // fallback fetch interval via Gist
+  const LIVE_RETRY_MS = 300000; // retry direct mode every 5 min after failure
 
   const $ = (id) => document.getElementById(id);
   const fa = (n) => Number(n).toLocaleString("fa-IR");
+  const num = (s) => Number(String(s).replace(/[^\d.-]/g, ""));
+  const stripTags = (s) => String(s).replace(/<[^>]*>/g, "").trim();
+  const tehranClock = () => new Intl.DateTimeFormat("fa-IR", {
+    timeZone: "Asia/Tehran", hour: "2-digit", minute: "2-digit", hour12: false
+  }).format(new Date());
+
+  let mode = "live";
+  let lastGistFetch = 0;
+  let lastLiveAttempt = 0;
 
   function setSkeleton(on) {
     ["price-rial", "high", "low", "change"].forEach((id) => {
@@ -172,7 +184,7 @@
     });
   }
 
-  function render(d) {
+  function render(d, srcLabel) {
     $("price-rial").textContent = fa(d.price_rial);
     $("price-toman").textContent = fa(d.price_toman) + " تومان";
     $("high").textContent = fa(d.high_rial);
@@ -191,26 +203,72 @@
       badge.textContent = "بدون تغییر نسبت به روز قبل";
     }
 
-    $("updated").textContent = "امروز ساعت " + String(d.last_updated_tehran).split(" ")[1];
+    let t = String(d.last_updated_tehran || "");
+    if (t.includes(" ")) t = t.split(" ")[1];
+    $("updated").textContent = "امروز ساعت " + t;
+    $("refresh-label").textContent = srcLabel;
     $("error").style.display = "none";
     setSkeleton(false);
   }
 
+  // Real-time: fetch directly from tgju.org API (CORS enabled)
+  async function fetchLive() {
+    const res = await fetch(API_URL + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const j = await res.json();
+    const row = j && j.data && j.data[0];
+    if (!row || num(row[3]) <= 0) throw new Error("bad data");
+    const last = num(row[3]);
+    const change = num(stripTags(row[4]));
+    render({
+      price_rial: last,
+      price_toman: Math.floor(last / 10),
+      high_rial: num(row[2]),
+      low_rial: num(row[1]),
+      change_rial: change,
+      change_percent: parseFloat(stripTags(row[5])) || 0,
+      direction: change > 0 ? "up" : change < 0 ? "down" : "stable",
+      last_updated_tehran: tehranClock()
+    }, "به‌روزرسانی زنده هر ۳۰ ثانیه — مستقیم از tgju.org");
+  }
+
+  // Fallback: read from Gist (updated every 5 min by GitHub Actions)
+  async function fetchGist() {
+    const res = await fetch(GIST_RAW + "?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const d = await res.json();
+    render(d, "حالت پشتیبان — از طریق گیست (هر ۵ دقیقه)");
+  }
+
   async function load() {
+    const now = Date.now();
+    if (mode === "gist" && now - lastLiveAttempt >= LIVE_RETRY_MS) mode = "live";
+
+    if (mode === "live") {
+      lastLiveAttempt = now;
+      try {
+        await fetchLive();
+        return;
+      } catch (e) {
+        console.warn("live fetch failed, falling back to gist:", e);
+        mode = "gist";
+      }
+    }
+
     try {
-      const res = await fetch(GIST_RAW + "?t=" + Date.now(), { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
-      render(data);
+      if (now - lastGistFetch >= GIST_MIN_GAP) {
+        lastGistFetch = now;
+        await fetchGist();
+      }
     } catch (e) {
-      console.error("fetch failed:", e);
+      console.error("gist fetch failed:", e);
       setSkeleton(false);
       $("error").style.display = "block";
     }
   }
 
   load();
-  setInterval(load, REFRESH_MS);
+  setInterval(load, POLL_MS);
 </script>
 </body>
 </html>

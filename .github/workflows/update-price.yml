@@ -2,8 +2,12 @@ name: Update Dollar Price
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/5 * * * *"   # minimum interval allowed by GitHub Actions
   workflow_dispatch:
+
+concurrency:
+  group: update-price
+  cancel-in-progress: true
 
 jobs:
   update-gist:
